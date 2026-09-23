@@ -1,37 +1,33 @@
 {
   "expo": {
-    "name": "Metronome",
-    "slug": "metronome",
-    "version": "1.1.0",
+    "name": "rythatune",
+    "slug": "rythatune",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "metronome",
-    "newArchEnabled": true,
-    "icon": "./assets/images/icon.png",
-    "android": {
-      "backgroundColor": "#000000",
-      "package": "com.garado.metronome",
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
     },
-    "plugins": [
-      "expo-router",
-      "expo-font",
-      "./plugins/withAndroidConfigChanges",
-      "./plugins/withAndroidTheme"
-    ],
-    "experiments": {
-      "typedRoutes": true
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.ashexpoqwe.rythatune"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "router": {},
       "eas": {
-        
+        "projectId": "eZAQt8j015_WVfEYl5CN5oej4J7O7dCHsVKgrwPT"
       }
-    },
-    "owner": "agarado",
-    "ios": {
-      "bundleIdentifier": "com.garado.metronome"
     }
   }
 }
