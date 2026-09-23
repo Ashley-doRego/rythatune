@@ -28,4 +28,4 @@ jobs:
       - name: Run EAS Build for Android
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas build -p android --profile preview --non-interactive
+        run: eas build -p android --profile production --non-interactive
