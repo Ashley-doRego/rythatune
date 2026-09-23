@@ -28,7 +28,7 @@ jobs:
       - name: Initialize EAS Project
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npx eas-cli init --account ashexpoqwe --non-interactive || true
+        run: eas init --account ashexpoqwe --force
 
       - name: Run EAS Build for Android
         env:
