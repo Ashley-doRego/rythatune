@@ -1,0 +1,167 @@
+package expo.modules.pitchdetector
+
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
+import expo.modules.kotlin.modules.Module
+import expo.modules.kotlin.modules.ModuleDefinition
+import kotlin.math.log2
+import kotlin.math.round
+
+class PitchDetectorModule : Module() {
+    private val sampleRate = 44100
+    private val bufferSamples = 4096
+    private val notes = arrayOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+    @Volatile private var referencePitch = 440.0
+
+    private var audioRecord: AudioRecord? = null
+    private var captureThread: Thread? = null
+    private var isRunning = false
+    private val lock = Any()
+
+    override fun definition() = ModuleDefinition {
+        Name("PitchDetector")
+
+        Events("onPitchDetected")
+
+        AsyncFunction("setReferencePitch") { hz: Double ->
+            referencePitch = hz
+        }
+
+        AsyncFunction("startListening") {
+            startCapture()
+        }
+
+        AsyncFunction("stopListening") {
+            stopCapture()
+        }
+    }
+
+    private fun startCapture() {
+        if (isRunning) return
+
+        val minBuffer = AudioRecord.getMinBufferSize(
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+        val recordBufferBytes = maxOf(minBuffer, bufferSamples * 4)
+
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            recordBufferBytes
+        )
+
+        isRunning = true
+        audioRecord?.startRecording()
+
+        captureThread = Thread {
+            val shortBuf = ShortArray(bufferSamples)
+            val floatBuf = FloatArray(bufferSamples)
+            var lastFreq = 0.0
+
+            while (isRunning) {
+                val read = synchronized(lock) { audioRecord?.read(shortBuf, 0, bufferSamples) } ?: break
+                if (read < bufferSamples) continue
+
+                for (i in 0 until bufferSamples) {
+                    floatBuf[i] = shortBuf[i] / 32768.0f
+                }
+
+                var freq = detectPitch(floatBuf)
+
+                // Octave error correction: if new freq is ~2x or ~0.5x the last, it's
+                // likely an erroneous octave jump - correct it back
+                if (freq > 0 && lastFreq > 0) {
+                    val ratio = freq / lastFreq
+                    if (ratio > 1.8 && ratio < 2.2) freq /= 2.0
+                    else if (ratio > 0.45 && ratio < 0.55) freq *= 2.0
+                }
+                if (freq > 0) lastFreq = freq
+
+                if (freq > 0) {
+                    val midi = 12 * log2(freq / referencePitch) + 69
+                    val rounded = round(midi).toInt()
+                    val cents = round((midi - rounded) * 100).toInt()
+                    val octave = rounded / 12 - 1
+                    val noteIndex = ((rounded % 12) + 12) % 12
+
+                    sendEvent("onPitchDetected", mapOf(
+                        "frequency" to freq,
+                        "note" to notes[noteIndex],
+                        "octave" to octave,
+                        "cents" to cents
+                    ))
+                }
+            }
+        }.also { it.start() }
+    }
+
+    private fun stopCapture() {
+        isRunning = false
+        synchronized(lock) {
+            audioRecord?.stop()
+            audioRecord?.release()
+            audioRecord = null
+        }
+        captureThread?.join(500)
+        captureThread = null
+    }
+
+    // YIN pitch detection algorithm
+    // de Cheveigné & Kawahara (2002): https://doi.org/10.1121/1.1458024
+    private fun detectPitch(buffer: FloatArray): Double {
+        var energy = 0.0
+        for (s in buffer) energy += s * s
+        if (energy / buffer.size < 0.0002) return -1.0
+
+        val W = buffer.size / 2
+        val minLag = sampleRate / 2000
+        val maxLag = minOf(W - 1, sampleRate / 50 + 1)
+
+        val diff = DoubleArray(maxLag + 1)
+        for (tau in 1..maxLag) {
+            var sum = 0.0
+            for (j in 0 until W) {
+                val d = (buffer[j] - buffer[j + tau]).toDouble()
+                sum += d * d
+            }
+            diff[tau] = sum
+        }
+
+        val cmnd = DoubleArray(maxLag + 1)
+        cmnd[0] = 1.0
+        var running = 0.0
+        for (tau in 1..maxLag) {
+            running += diff[tau]
+            cmnd[tau] = if (running > 0) (diff[tau] * tau) / running else 0.0
+        }
+
+        val threshold = 0.25
+        for (tau in minLag..maxLag) {
+            if (cmnd[tau] < threshold) {
+                var t = tau
+                while (t + 1 <= maxLag && diff[t + 1] < diff[t]) t++
+                return sampleRate.toDouble() / parabolicInterp(diff, t, maxLag)
+            }
+        }
+
+        var minVal = Double.MAX_VALUE
+        var minTau = minLag
+        for (tau in minLag..maxLag) {
+            if (cmnd[tau] < minVal) { minVal = cmnd[tau]; minTau = tau }
+        }
+        if (minVal > 0.6) return -1.0
+        return sampleRate.toDouble() / parabolicInterp(diff, minTau, maxLag)
+    }
+
+    private fun parabolicInterp(arr: DoubleArray, tau: Int, max: Int): Double {
+        if (tau <= 0 || tau >= max) return tau.toDouble()
+        val a = arr[tau - 1]; val b = arr[tau]; val c = arr[tau + 1]
+        val denom = a - 2 * b + c
+        return if (denom == 0.0) tau.toDouble() else tau + (a - c) / (2 * denom)
+    }
+}

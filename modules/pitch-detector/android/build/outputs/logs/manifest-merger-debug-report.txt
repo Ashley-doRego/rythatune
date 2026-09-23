@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml:2:13-83
+INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml:2:13-83
+	package
+		INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml
+	xmlns:android
+		ADDED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml:2:23-81
+uses-sdk
+INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml reason: use-sdk injection requested
+INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml
+INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml
+	android:targetSdkVersion
+		INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml
+	android:minSdkVersion
+		INJECTED from /Users/ashley/Downloads/light-metronome-1.1.0/modules/pitch-detector/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4938963820600889992.xml
